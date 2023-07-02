@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Поиск папки по номеру</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styleAuth.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="green-text">Введите номер папки, которую хотите найти</h1>
+    <input type="text" name="idDoc" id="idDocInput">
+    <button id="findButton">Найти</button>
+    <div id="roomMessage"></div>
+    <div id="roomButtons">
+      <button id="yBtn" class="YesNoButtons">Да</button>
+      <button id="nBtn" class="YesNoButtons">Нет</button>
+    </div>
+    <button id="buttonMenu" style="justify-content: center;">В меню</button>
+  </div>
+
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAHnK-FVrEpoPT78-QLN4YNEjwLOKDqx_w",
+      authDomain: "test-af4e9.firebaseapp.com",
+      databaseURL: "https://test-af4e9-default-rtdb.firebaseio.com",
+      projectId: "test-af4e9",
+      storageBucket: "test-af4e9.appspot.com",
+      messagingSenderId: "78974433240",
+      appId: "1:78974433240:web:8fcb051e58814fdd4124ad"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase();
+
+    var findButton = document.querySelector("#findButton");
+    var roomName;
+
+    function findRoomByDoc() {
+      var idDocInput = document.getElementById("idDocInput");
+      var roomMessage = document.getElementById("roomMessage");
+      var roomButtons = document.getElementById("roomButtons");
+      var idDoc = idDocInput.value;
+
+      var isFolderFound = false;
+
+      onValue(ref(database), function(snapshot) {
+        snapshot.forEach(function(childSnapshot) {
+          if (isFolderFound) {
+            return; // Выход из функции, если папка уже найдена
+          }
+
+          var currentRoomName = childSnapshot.key;
+          childSnapshot.forEach(function(grandchildSnapshot) {
+            if (isFolderFound) {
+              return; // Выход из функции, если папка уже найдена
+            }
+
+            var value = grandchildSnapshot.val();
+            const [start, end] = getRangeValues(value);
+
+            if (/^М\d+$/.test(idDoc)) {
+              roomMessage.textContent = "Ваша папка находится в \"Москве\". Посмотреть схему?";
+              roomButtons.style.display = "block";
+              roomName = "room3";
+              isFolderFound = true;
+              return;
+            }
+
+            if (parseInt(idDoc) >= start && parseInt(idDoc) <= end) {
+              if (currentRoomName === "room1") {
+                roomMessage.innerHTML = "Ваша папка находится в помещении 7.1.16.<br>Посмотреть схему?";
+                roomButtons.style.display = "block";
+                roomName = currentRoomName;
+                isFolderFound = true;
+                return;
+              } else if (currentRoomName === "room2") {
+                roomMessage.innerHTML = 'Ваша папка находится в "Стекляшке".<br>Посмотреть схему?';
+                roomButtons.style.display = "block";
+                roomName = currentRoomName;
+                isFolderFound = true;
+                return;
+              } else if (currentRoomName === "room4") {
+                roomMessage.innerHTML = 'Ваша папка находится в "ЮЗБ".<br>Посмотреть схему?';
+                roomButtons.style.display = "block";
+                roomName = currentRoomName;
+                isFolderFound = true;
+                return;
+              }
+            }
+          });
+        });
+
+        if (!isFolderFound) {
+          roomMessage.innerHTML = "Пожалуйста, введите номер папки корректно";
+          roomButtons.style.display = "none";
+        }
+      }, {
+        onlyOnce: true
+      });
+    }
+
+    function goToRoom(roomName) {
+      var idDocInput = document.getElementById("idDocInput");
+      var idDoc = idDocInput.value;
+      localStorage.setItem("number", idDoc);
+
+      if (roomName === "room1") {
+        window.location.href = "rooms/room1.html";
+      } else if (roomName === "room2") {
+        window.location.href = "rooms/room2.html";
+      } else if (roomName === "room3") {
+        window.location.href = "rooms/room3.html";
+      } else if (roomName === "room4") {
+        window.location.href = "rooms/room4.html";
+      }
+    }
+
+    function doNotGoToRoom() {
+      location.reload(); // Перезагрузить страницу
+    }
+
+    var yBtn = document.querySelector("#yBtn");
+    yBtn.addEventListener('click', function() {
+      goToRoom(roomName);
+    });
+
+    var nBtn = document.querySelector("#nBtn");
+    nBtn.addEventListener('click', doNotGoToRoom);
+
+    var buttonMenu = document.querySelector("#buttonMenu");
+    buttonMenu.addEventListener('click', function() {
+      window.location.href = "menu.html";
+    });
+
+    function getRangeValues(value) {
+      let start, end;
+      if (value && value.includes("-")) {
+        const values = value.split("-");
+        start = parseInt(values[0]);
+        end = parseInt(values[1]);
+      }
+      return [start, end];
+    }
+
+    findButton.addEventListener('click', findRoomByDoc);
+  </script>
+</body>
+</html>
